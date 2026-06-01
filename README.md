@@ -368,3 +368,83 @@ Retorno esperado:
   "message": "Servidor e conexão com banco funcionando."
 }
 ```
+
+Guia de Inicialização do Sistema (Do Zero ao Teste)
+
+Este passo a passo serve para inicializar cada componente da sua infraestrutura e validar o fluxo completo:
+
+Passo 1: Ligar e configurar a VM DB (192.168.48.22)
+
+Inicie o sistema operacional da VM DB.
+
+Garanta que o serviço do MySQL Server está de pé:
+
+sudo systemctl restart mysql
+
+
+Garanta que as configurações do /etc/mysql/mysql.conf.d/mysqld.cnf possuem o bind-address e o mysqlx-bind-address configurados para 0.0.0.0 para aceitarem tráfego externo.
+
+Passo 2: Ligar e subir a VM APP (192.168.48.21)
+
+Inicie a VM APP.
+
+Acesse a pasta onde o repositório e o Docker Compose estão instalados:
+
+cd /home/grupo2/task-manager-webapp/task-manager-webapp/
+
+
+Suba o ecossistema Docker:
+
+docker compose down # Garante que nada esteja travado
+docker compose up -d
+
+
+Confirme que os dois contêineres estão operacionais (Up):
+
+docker ps
+
+
+Passo 3: Ligar e configurar a VM PROXY (192.168.48.20)
+
+Inicie a VM PROXY.
+
+Abra e configure o arquivo padrão do Nginx em /etc/nginx/sites-available/default com os redirecionamentos para as portas do Docker na VM APP:
+
+server {
+    listen 80;
+    server_name localhost;
+
+    location / {
+        proxy_pass [http://192.168.48.21:8000](http://192.168.48.21:8000);
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location /api/ {
+        proxy_pass [http://192.168.48.21:3000](http://192.168.48.21:3000);
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+
+
+Valide o arquivo de sintaxe e reinicie o Nginx nativo:
+
+sudo nginx -t
+sudo systemctl restart nginx
+
+
+Passo 4: O Teste de Funcionamento
+
+Abra o navegador do seu computador pessoal e acesse:
+
+[http://192.168.48.20](http://192.168.48.20)
+
+
+Crie uma tarefa de teste utilizando os campos "Título" e "Descrição" e clique em Salvar tarefa.
+
+Clique em Atualizar lista.
+
+Se o card aparecer na tela de forma persistente, seu ambiente distribuído está integrado, seguro e operando perfeitamente de ponta a ponta!
