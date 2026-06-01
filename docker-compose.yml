@@ -1,0 +1,23 @@
+services:
+  backend:
+    build: ./backend
+    container_name: task-manager-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=192.168.48.22
+      - DB_PORT=3306
+      - DB_USER=grupo2
+      - DB_NAME=task_manager
+      - DB_PASSWORD=grupo2123
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: task-manager-frontend
+    ports:
+      - "8000:80"
+    restart: always
+    depends_on:
+      - backend
