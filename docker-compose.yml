@@ -22,4 +22,4 @@ services:
       replicas: 3 # Alta disponibilidade do front-end
       restart_policy:
         condition: on-failure
-# Testando webhook do Portainer
+# Testando pela segunda vez webhook do Portainer
