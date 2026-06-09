@@ -1,23 +1,24 @@
+version: '3.8'
+
 services:
   backend:
-    build: ./backend
-    container_name: task-manager-backend
+    image: victor584198156/taskmanager-backend:v1 # A imagem que você acabou de subir
     ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - DB_HOST=192.168.48.22
-      - DB_PORT=3306
-      - DB_USER=grupo2
-      - DB_NAME=task_manager
-      - DB_PASSWORD=grupo2123
-    restart: always
+      - "8080:8080" # Ajuste para a porta real do seu back-end
+    deploy:
+      mode: replicated
+      replicas: 3 # Alta disponibilidade do back-end
+      restart_policy:
+        condition: on-failure
 
   frontend:
-    build: ./frontend
-    container_name: task-manager-frontend
+    image: victor584198156/taskmanager-frontend:v1 # A imagem que você acabou de subir
     ports:
-      - "8000:80"
-    restart: always
+      - "80:80" # Ajuste para a porta real do seu front-end (provavelmente Nginx)
     depends_on:
       - backend
+    deploy:
+      mode: replicated
+      replicas: 3 # Alta disponibilidade do front-end
+      restart_policy:
+        condition: on-failure
