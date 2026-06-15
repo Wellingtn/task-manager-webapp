@@ -1,25 +1,51 @@
 version: '3.8'
 
 services:
-  backend:
-    image: victor584198156/taskmanager-backend:v1 # A imagem que você acabou de subir
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: task_manager
+      MYSQL_USER: TASKAPP
+      MYSQL_PASSWORD: grupo2123
+      MYSQL_ROOT_PASSWORD: grupo2123
     ports:
-      - "8080:8080" # Ajuste para a porta real do seu back-end
+      - "3306:3306"
     deploy:
       mode: replicated
-      replicas: 3 # Alta disponibilidade do back-end
+      replicas: 1
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  backend:
+    image: victor584198156/taskmanager-backend:v1
+    environment:
+      - PORT=8080
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=TASKAPP
+      - DB_PASSWORD=grupo2123
+      - DB_NAME=task_manager
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    deploy:
+      mode: replicated
+      replicas: 3
       restart_policy:
         condition: on-failure
 
   frontend:
-    image: victor584198156/taskmanager-frontend:v1 # A imagem que você acabou de subir
+    image: victor584198156/taskmanager-frontend:v1
     ports:
-      - "80:80" # Ajuste para a porta real do seu front-end (provavelmente Nginx)
+      - "80:80"
     depends_on:
       - backend
     deploy:
       mode: replicated
-      replicas: 3 # Alta disponibilidade do front-end
+      replicas: 3
       restart_policy:
         condition: on-failure
-# Testando pela segunda vez webhook do Portainer
+
+volumes:
+  mysql_data:
