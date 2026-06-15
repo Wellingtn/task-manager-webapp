@@ -34,7 +34,7 @@ services:
   frontend:
     image: victor584198156/taskmanager-frontend:v1
     ports:
-      - "80:80"
+      - "8000:80"
     depends_on:
       - backend
     deploy:
