@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # MySQL - Isolado no nó de banco
   db:
     image: mysql:8.0
     environment:
@@ -22,7 +21,6 @@ services:
         constraints:
           - node.labels.tipo == db
 
-  # Backend - Isolado no nó de aplicação
   backend:
     image: victor584198156/taskmanager-backend:v1
     environment:
@@ -42,7 +40,6 @@ services:
         constraints:
           - node.labels.tipo == app
 
-  # Frontend - Isolado no nó de aplicação
   frontend:
     image: victor584198156/taskmanager-frontend:v1
     environment:
@@ -58,7 +55,6 @@ services:
         constraints:
           - node.labels.tipo == app
 
-  # Proxy Reverso Nginx - Configurado via Docker Configs
   proxy:
     image: nginx:alpine
     ports:
@@ -67,7 +63,7 @@ services:
       - app-network
     configs:
       - source: nginx_config
-        target: /etc/nginx/nginx.conf # Injeta a rota customizada dentro do container
+        target: /etc/nginx/nginx.conf
     deploy:
       mode: replicated
       replicas: 1
@@ -86,37 +82,7 @@ volumes:
   db_data:
     driver: local
 
-# Aqui criamos o arquivo de configuração de forma embutida e distribuída no Swarm
+# Aqui mapeamos o arquivo físico que está na raiz do repositório Git
 configs:
   nginx_config:
-    data: |
-      events { worker_connections 1024; }
-      http {
-          include       /etc/nginx/mime.types;
-          default_type  application/octet-stream;
-          upstream frontend_server {
-              server frontend:80;
-          }
-          upstream backend_server {
-              server backend:5000;
-          }
-          server {
-              listen 80;
-              server_name localhost;
-              location / {
-                  proxy_pass http://frontend_server;
-                  proxy_set_header Host $$host;
-                  proxy_set_header X-Real-IP $$remote_addr;
-                  proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
-              }
-              location /api/ {
-                  proxy_pass http://backend_server/;
-                  proxy_set_header Host $$host;
-                  proxy_set_header X-Real-IP $$remote_addr;
-                  proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
-                  proxy_http_version 1.1;
-                  proxy_set_header Upgrade $$http_upgrade;
-                  proxy_set_header Connection "Upgrade";
-              }
-          }
-      }
+    file: ./nginx.conf
