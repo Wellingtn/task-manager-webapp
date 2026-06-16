@@ -22,7 +22,7 @@ services:
           - node.labels.tipo == db
 
   backend:
-    image: victor584198156/taskmanager-backend:v1
+    image: victor584198156/taskmanager-backend:latest
     environment:
       DB_HOST: db
       DB_USER: TASKAPP
@@ -42,7 +42,7 @@ services:
           - node.labels.tipo == app
 
   frontend:
-    image: victor584198156/taskmanager-frontend:v1
+    image: victor584198156/taskmanager-frontend:latest
     environment:
       API_URL: http://backend:3000
     networks:
