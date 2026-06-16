@@ -28,7 +28,8 @@ services:
       DB_USER: TASKAPP
       DB_PASSWORD: TaskAppPassword123!
       DB_NAME: task_manager
-      PORT: 5000
+      PORT: 3000 # Alterado para 3000 de acordo com o log
+      NODE_ENV: production # Diz ao Node para rodar em modo produção
     networks:
       - app-network
     deploy:
@@ -43,7 +44,7 @@ services:
   frontend:
     image: victor584198156/taskmanager-frontend:v1
     environment:
-      API_URL: http://backend:5000
+      API_URL: http://backend:3000 # Alterado para 3000
     networks:
       - app-network
     deploy:
@@ -82,7 +83,6 @@ volumes:
   db_data:
     driver: local
 
-# Aqui mapeamos o arquivo físico que está na raiz do repositório Git
 configs:
   nginx_config:
     file: ./nginx.conf
