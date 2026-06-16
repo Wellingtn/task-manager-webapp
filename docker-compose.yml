@@ -1,47 +1,65 @@
 version: '3.8'
 
 services:
-  mysql:
+  task-manager-prod_mysql:
     image: mysql:8.0
     environment:
       MYSQL_DATABASE: task_manager
-      MYSQL_USER: grupo2
-      MYSQL_PASSWORD: grupo2123
-      MYSQL_ROOT_PASSWORD: grupo2123
-    ports:
-      - "3306:3306"
+      MYSQL_USER: TASKAPP
+      MYSQL_PASSWORD: TaskAppPassword123!
+      MYSQL_ROOT_PASSWORD: RootSecurePassword456!
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app-network
     deploy:
       mode: replicated
       replicas: 1
-    volumes:
-      - mysql_data:/var/lib/mysql
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.labels.tipo == db  # Força a rodar APENAS na VM de banco
 
-  backend:
+  task-manager-prod_backend:
     image: victor584198156/taskmanager-backend:v1
-    ports:
-      - "8080:8080"
     environment:
-      - DB_HOST=${DB_HOST}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      DB_HOST: task-manager-prod_mysql # Usa o DNS interno do Swarm
+      DB_USER: TASKAPP
+      DB_PASSWORD: TaskAppPassword123!
+      DB_NAME: task_manager
+      PORT: 5000
+    networks:
+      - app-network
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 1
       restart_policy:
         condition: on-failure
+      placement:
+        constraints:
+          - node.labels.tipo == app # Força a rodar APENAS na VM de app
 
-  frontend:
+  task-manager-prod_frontend:
     image: victor584198156/taskmanager-frontend:v1
-    ports:
-      - "8000:80"
-    depends_on:
-      - backend
+    environment:
+      API_URL: http://task-manager-prod_backend:5000
+    networks:
+      - app-network
     deploy:
       mode: replicated
-      replicas: 3
+      replicas: 1
       restart_policy:
         condition: on-failure
+      placement:
+        constraints:
+          - node.labels.tipo == app # Força a rodar APENAS na VM de app
+
+networks:
+  app-network:
+    driver: overlay
+    attachable: true
 
 volumes:
-  mysql_data:
+  db_data:
+    driver: local
