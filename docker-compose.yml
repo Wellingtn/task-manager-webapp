@@ -58,13 +58,16 @@ services:
         constraints:
           - node.labels.tipo == app
 
-  # Proxy Reverso Nginx - Isolado no Manager (Único exposto para a internet)
+  # Proxy Reverso Nginx - Configurado via Docker Configs
   proxy:
     image: nginx:alpine
     ports:
       - "80:80"
     networks:
       - app-network
+    configs:
+      - source: nginx_config
+        target: /etc/nginx/nginx.conf # Injeta a rota customizada dentro do container
     deploy:
       mode: replicated
       replicas: 1
@@ -82,3 +85,38 @@ networks:
 volumes:
   db_data:
     driver: local
+
+# Aqui criamos o arquivo de configuração de forma embutida e distribuída no Swarm
+configs:
+  nginx_config:
+    data: |
+      events { worker_connections 1024; }
+      http {
+          include       /etc/nginx/mime.types;
+          default_type  application/octet-stream;
+          upstream frontend_server {
+              server frontend:80;
+          }
+          upstream backend_server {
+              server backend:5000;
+          }
+          server {
+              listen 80;
+              server_name localhost;
+              location / {
+                  proxy_pass http://frontend_server;
+                  proxy_set_header Host $$host;
+                  proxy_set_header X-Real-IP $$remote_addr;
+                  proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+              }
+              location /api/ {
+                  proxy_pass http://backend_server/;
+                  proxy_set_header Host $$host;
+                  proxy_set_header X-Real-IP $$remote_addr;
+                  proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+                  proxy_http_version 1.1;
+                  proxy_set_header Upgrade $$http_upgrade;
+                  proxy_set_header Connection "Upgrade";
+              }
+          }
+      }
