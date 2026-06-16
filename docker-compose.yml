@@ -28,6 +28,89 @@ services:
       DB_USER: TASKAPP
       DB_PASSWORD: TaskAppPassword123!
       DB_NAME: task_manager
+      PORT: 3000
+      NODE_ENV: production
+    networks:
+      - app-network
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.labels.tipo == app
+
+  frontend:
+    image: victor584198156/taskmanager-frontend:v1
+    environment:
+      API_URL: http://backend:3000
+    networks:
+      - app-network
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.labels.tipo == app
+
+  proxy:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    networks:
+      - app-network
+    volumes:
+      # Modificado aqui: injeta o arquivo direto do repositório baixado para o container
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.role == manager
+
+networks:
+  app-network:
+    driver: overlay
+    attachable: true
+
+volumes:
+  db_data:
+    driver: localversion: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: task_manager
+      MYSQL_USER: TASKAPP
+      MYSQL_PASSWORD: TaskAppPassword123!
+      MYSQL_ROOT_PASSWORD: RootSecurePassword456!
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - app-network
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+      placement:
+        constraints:
+          - node.labels.tipo == db
+
+  backend:
+    image: victor584198156/taskmanager-backend:v1
+    environment:
+      DB_HOST: db
+      DB_USER: TASKAPP
+      DB_PASSWORD: TaskAppPassword123!
+      DB_NAME: task_manager
       PORT: 3000 # Alterado para 3000 de acordo com o log
       NODE_ENV: production # Diz ao Node para rodar em modo produção
     networks:
