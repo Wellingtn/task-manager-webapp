@@ -53,15 +53,16 @@ services:
       - "80:80"
     networks:
       - app-network
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    configs:
+      # Aponta para a nova versão da configuração distribuída do Swarm
+      - source: nginx_config_v2
+        target: /etc/nginx/nginx.conf
     deploy:
       mode: replicated
       replicas: 1
       restart_policy:
         condition: on-failure
 
-# Faltava este bloco essencial aqui embaixo!
 networks:
   app-network:
     driver: overlay
@@ -70,3 +71,8 @@ networks:
 volumes:
   db_data:
     driver: local
+
+# O Swarm vai ler o arquivo nginx.conf do Git e criar o objeto injetável dentro das VMs
+configs:
+  nginx_config_v2:
+    file: ./nginx.conf
