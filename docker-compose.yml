@@ -62,8 +62,10 @@ services:
       - "80:80"
     networks:
       - app-network
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    configs:
+      # Aponta para a config nativa do Swarm
+      - source: nginx_config_v1
+        target: /etc/nginx/nginx.conf
     deploy:
       mode: replicated
       replicas: 1
@@ -81,3 +83,8 @@ networks:
 volumes:
   db_data:
     driver: local
+
+# O Swarm vai ler o arquivo físico do repositório Git e criar uma Config estável no cluster
+configs:
+  nginx_config_v1:
+    file: ./nginx.conf
